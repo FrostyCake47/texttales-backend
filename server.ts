@@ -1,7 +1,17 @@
 import { WebSocketServer } from "ws";
+import express from 'express';
 
+const app = express();
 const port = 1234;
+
+
+// Start the server
+const server = app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+
 const wss = new WebSocketServer({port});
+
 
 wss.on('connection', (ws) => {
     
