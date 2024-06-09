@@ -7,14 +7,9 @@ import getRoomID from "./services";
 
 const app = express();
 const port = 6969;
-//const port2 = 1234;
 
 let onlineRooms = new Set<number>();
 
-// Start the server
-/*const server = app.listen(port2, () => {
-    console.log(`Server is listening on port ${port2}`);
-  });*/
 
 const server = http.createServer(app);
 
@@ -33,7 +28,7 @@ app.get('/weow', (req, res) => {
     }
 })
 
-app.get('/rooms', (req, res) => {
+app.get('/rooms/create', (req, res) => {
     const roomId = getRoomID(onlineRooms);
     console.log(roomId);
     try{
