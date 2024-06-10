@@ -6,15 +6,15 @@ import cors from 'cors';
 import getRoomID from "./services";
 
 const app = express();
+app.use(express.json());
+
 const port = 6969;
+const port2 = 1234;
 
 let onlineRooms = new Set<number>();
 
 
-const server = http.createServer(app);
-
-const wss = new WebSocketServer({ server });
-app.use(express.json());
+const wss = new WebSocketServer({ port });
 
 
 app.get('/weow', (req, res) => {
@@ -33,6 +33,7 @@ app.get('/rooms/create', (req, res) => {
     console.log(roomId);
     try{
         res.json({roomId});
+
     }
     catch(e){
         console.log(e);
@@ -48,6 +49,6 @@ wss.on('connection', (ws, req) => {
     ws.send(`Hello, this is server`);
 });
 
-app.listen(port, () => {
-    console.log(`Server is listening on port ${port}`);
+app.listen(port2, () => {
+    console.log(`Server is listening on port ${port2}`);
 });
