@@ -3,7 +3,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 
-import getRoomID from "./services";
+import getRoomID from "./services/getroomid";
 import Player from "./models/player";
 import RoomData from "./models/roomdata";
 import logRoomData from "./models/logroomdata";

@@ -1,4 +1,4 @@
-import getRoomID from "./services";
+import getRoomID from "./services/getroomid";
 
 let onlineRooms = new Set<number>();
 
