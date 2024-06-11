@@ -69,9 +69,10 @@ app.post('/rooms/create', (req, res) => {
 });
 
 app.post('/rooms/join', (req, res) => {
+    console.log('rooms/join req');
     const inputRoomId = req.body['roomId'];
-    if(roomDataMap.has(inputRoomId)) res.json({'status':true});
-    else res.json({'status':false});
+    if(roomDataMap.has(inputRoomId)) res.json({'status':'true'});
+    else res.json({'status':'invalid room'});
 })
 
 
