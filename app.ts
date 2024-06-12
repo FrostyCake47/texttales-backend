@@ -53,7 +53,7 @@ app.post('/rooms/create', (req, res) => {
                 maxchar: 200,
                 time: 60,
             },
-            players: []
+            players: new Set<Player>()
         }
         roomDataMap.set(roomId, roomData);
     }
@@ -88,7 +88,6 @@ wss.on('connection', (ws, req) => {
         console.log(`Received msg from client here${JSON.stringify(message)}`);
         
         if(message['type'] == 'join'){
-            console.log('yeaa type is join');
             playerMap.set(message['playerId'], ws);
 
             const _player: Player = {
@@ -98,13 +97,27 @@ wss.on('connection', (ws, req) => {
             }
             
             //adding players in roomData
-            const _roomData = roomDataMap.get(message['roomId']);
-            //console.log(`player" ${JSON.stringify(_player, null, 2)}`);
+            let _roomData = roomDataMap.get(message['roomId']);
             if(_roomData){
-                const updatedPlayers = [..._roomData.players, _player];
+                _roomData.gameSetting.initialInstance = false;
+                _roomData.players.add(_player);
+
+                roomDataMap.set(message['roomId'], _roomData);
+
+                //console.log(`updated players: ${JSON.stringify(_roomData, null, 2)}`);
+                logRoomData(roomDataMap);
+
+            }
+            
+            
+            /*if(_roomData){
+                const updatedPlayers = _roomData.players.add(_player);
+                //const updatedPlayers = _roomData.players.add(_player);
+                console.log(`updated players: ${JSON.stringify(updatedPlayers, null, 2)}`);
+        
                 roomDataMap.set(message['roomId'], {..._roomData, players: updatedPlayers});
                 logRoomData(roomDataMap);
-            }
+            }*/
         }
 
         
