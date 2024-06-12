@@ -6,3 +6,4 @@ export default interface RoomData{
     gameSetting: GameSetting;
     players: Player[];
 }
+
