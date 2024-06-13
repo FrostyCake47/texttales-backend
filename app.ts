@@ -16,7 +16,8 @@ const port2 = 1234;
 
 let onlineRooms = new Set<number>();
 let roomDataMap = new Map<number, RoomData>();
-let playerMap = new Map<String, WebSocket>();
+
+let playerMap = new  Map<WebSocket, {playerId: string, roomId: number}>();
 
 const wss = new WebSocketServer({ port });
 
@@ -88,7 +89,7 @@ wss.on('connection', (ws, req) => {
         console.log(`Received msg from client here${JSON.stringify(message)}`);
         
         if(message['type'] == 'join'){
-            playerMap.set(message['playerId'], ws);
+            
 
             const _player: Player = {
                 playerId : message['player']['playerId'],
@@ -103,9 +104,11 @@ wss.on('connection', (ws, req) => {
                 _roomData.players.add(_player);
 
                 roomDataMap.set(message['roomId'], _roomData);
+                playerMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
 
                 //console.log(`updated players: ${JSON.stringify(_roomData, null, 2)}`);
                 logRoomData(roomDataMap);
+                
 
             }
             
@@ -125,6 +128,12 @@ wss.on('connection', (ws, req) => {
 
     ws.on('close', (data) => {
         console.log(`User disconnected data: ${data}`);
+        const playerInfo: {playerId: string, roomId: number} | undefined = playerMap.get(ws);
+
+        if(playerInfo){
+            console.log(`disconnected user: ${playerInfo.playerId} from room ${playerInfo.roomId}`);
+        }
+
     })
 
     
