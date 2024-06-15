@@ -19,6 +19,7 @@ let onlineRooms = new Set<number>();
 let roomDataMap = new Map<number, RoomData>();
 
 let playerMap = new  Map<WebSocket, {playerId: string, roomId: number}>();
+//let playerMap2 = new Map<string, WebSocket>();
 
 const wss = new WebSocketServer({ port });
 
@@ -66,7 +67,8 @@ app.post('/rooms/create', (req, res) => {
             time: 60,
         }
         const _players = new Set<Player>();
-        let roomData = new RoomData(roomId, _gameSetting, _players)
+        const _sockets = new Set<WebSocket>();
+        let roomData = new RoomData(roomId, _gameSetting, _players, _sockets);
 
         roomDataMap.set(roomId, roomData);
     }
@@ -101,7 +103,6 @@ wss.on('connection', (ws, req) => {
         console.log(`Received msg from client here${JSON.stringify(message)}`);
         
         if(message['type'] == 'join'){
-        
             const _player: Player = {
                 playerId : message['player']['playerId'],
                 name: message['player']['name'],
@@ -113,16 +114,30 @@ wss.on('connection', (ws, req) => {
 
             if(_roomData){
                 _roomData.addPlayers(_player);
+                _roomData.addSocket(ws);
+
                 roomDataMap.set(message['roomId'], _roomData);
                 playerMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
-
-                //console.log(`updated players: ${JSON.stringify(_roomData, null, 2)}`);
                 logRoomData(roomDataMap);
+
+                ws.send(JSON.stringify({
+                    type:'youjoin',
+                    gameSetting:_roomData.gameSetting,
+                    players: Array.from(_roomData.players),
+                }))
+
+                _roomData.sockets.forEach((_ws) => {
+                    if(_ws != ws) _ws.send(JSON.stringify({
+                        type:'otherjoin',
+                        player: _player
+                    }))
+                });
             }
         }
 
         
     })
+
 
     ws.on('close', (data) => {
         console.log(`User disconnected data: ${data}`);
@@ -132,9 +147,22 @@ wss.on('connection', (ws, req) => {
             console.log(`disconnected user: ${playerInfo.playerId} from room ${playerInfo.roomId}`);
             const _roomData = roomDataMap.get(playerInfo.roomId);
 
+            //remove player from roomdata 
             if(_roomData?.removePlayer(playerInfo.playerId) == true){
-                console.log('then this should run');
+                _roomData.removeSocket(ws);
+
                 roomDataMap.set(playerInfo.roomId, _roomData);
+
+                //and broadcast it
+                //ws.send(JSON.stringify(_roomData));
+                _roomData.sockets.forEach((ws) => {
+                    ws.send(JSON.stringify(
+                        {
+                            type:'disconnect',
+                            player: playerInfo.playerId
+                        }
+                    ))
+                });
                 
                 //remove from roomdata if theres no players left
                 if(_roomData.players.size == 0 && _roomData.gameSetting.initialInstance == false){
@@ -144,8 +172,10 @@ wss.on('connection', (ws, req) => {
 
             console.log(`loggin roomDataMap`);
             logRoomData(roomDataMap);
-            //remove player from roomdata and broadcast it
+            
+
             //remove player from playerMap
+            playerMap.delete(ws);
         }
 
     })
