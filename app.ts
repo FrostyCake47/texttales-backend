@@ -61,6 +61,7 @@ app.post('/rooms/create', (req, res) => {
 
         // create new roomData
         const _gameSetting : GameSetting = {
+            gamemode: "Classic",
             initialInstance: true,
             rounds: 5,
             maxchar: 200,
@@ -120,12 +121,15 @@ wss.on('connection', (ws, req) => {
                 playerMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
                 logRoomData(roomDataMap);
 
+                //give gamesetting to newly joined player
                 ws.send(JSON.stringify({
                     type:'youjoin',
                     gameSetting:_roomData.gameSetting,
                     players: Array.from(_roomData.players),
                 }))
 
+
+                //send info about the newly joined player to other
                 _roomData.sockets.forEach((_ws) => {
                     if(_ws != ws) _ws.send(JSON.stringify({
                         type:'otherjoin',
@@ -182,7 +186,10 @@ wss.on('connection', (ws, req) => {
 
     
 
-    ws.send(`Hello, this is server`);
+    ws.send(JSON.stringify({
+        type:'hello',
+        message:`Hello, this is server`
+    }));
 });
 
 app.listen(port2, () => {
