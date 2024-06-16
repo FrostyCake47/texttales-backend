@@ -139,6 +139,25 @@ wss.on('connection', (ws, req) => {
             }
         }
 
+        else if(message['type'] == 'gameSetting'){
+            let _roomData = roomDataMap.get(message['roomId']);
+
+            if(_roomData){
+                _roomData.gameSetting = message['gameSetting'];
+                roomDataMap.set(message['roomId'], _roomData);
+                
+                console.log(`new gameSetting: ${JSON.stringify(_roomData.gameSetting)}`);
+                _roomData.sockets.forEach((_ws) => {
+                    if(_ws != ws) _ws.send(JSON.stringify({
+                        type:'gameSetting',
+                        gameSetting:_roomData.gameSetting
+                    }))
+                });
+            }
+
+            
+        }
+
         
     })
 
