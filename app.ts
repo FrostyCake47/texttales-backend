@@ -43,7 +43,7 @@ app.post('/rooms/create', (req, res) => {
     const newPlayer: Player = {
         playerId: req.body['playerData']['playerId'] ?? 0,
         name: req.body['playerData']['name'] ?? '',
-        photoUrl: req.body['playerData']['photoUrl'] ?? ''
+        photoURL: req.body['playerData']['photoURL'] ?? ''
     }
 
     if(roomId != 0 && roomId != 1){
@@ -63,7 +63,7 @@ app.post('/rooms/create', (req, res) => {
         const _gameSetting : GameSetting = {
             gamemode: "Classic",
             initialInstance: true,
-            rounds: 5,
+            rounds: 7,
             maxchar: 200,
             time: 60,
         }
@@ -107,7 +107,7 @@ wss.on('connection', (ws, req) => {
             const _player: Player = {
                 playerId : message['player']['playerId'],
                 name: message['player']['name'],
-                photoUrl: message['player']['photoUrl']
+                photoURL: message['player']['photoURL']
             }
             
             //adding players in roomData
