@@ -163,7 +163,7 @@ wss.on('connection', (ws, req) => {
                     ws.send(JSON.stringify(
                         {
                             type:'disconnect',
-                            player: playerInfo.playerId
+                            playerId: playerInfo.playerId
                         }
                     ))
                 });
