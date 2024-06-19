@@ -6,13 +6,15 @@ export default class RoomData{
     roomId: number;
     gameSetting: GameSetting;
     players: Set<Player>;
+    readyPlayers: Map<string, boolean>;
     sockets: Set<WebSocket>;
 
-    constructor(roomId: number, gameSetting: GameSetting, players: Set<Player>, sockets: Set<WebSocket>){
+    constructor(roomId: number, gameSetting: GameSetting, players: Set<Player>, sockets: Set<WebSocket>, readyPlayers: Map<string, boolean>){
         this.roomId = roomId;
         this.gameSetting = gameSetting;
         this.players = players;
         this.sockets = sockets;
+        this.readyPlayers = readyPlayers;
     }
 
     addPlayers(player: Player) : void {
@@ -37,5 +39,13 @@ export default class RoomData{
 
     removeSocket(ws: WebSocket) : void {
         this.sockets.delete(ws);
+    }
+
+    addReadyPlayer(playerId: string) : void{
+        this.readyPlayers.set(playerId, true);
+    }
+
+    removeReadyPlayer(playerId: string) : void {
+        this.readyPlayers.set(playerId, false);
     }
 }

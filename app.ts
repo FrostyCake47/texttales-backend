@@ -47,18 +47,6 @@ app.post('/rooms/create', (req, res) => {
     }
 
     if(roomId != 0 && roomId != 1){
-        /*let roomData : RoomData;
-        roomData = {
-            roomId: roomId,
-            gameSetting: {
-                initialInstance: true,
-                rounds: 5,
-                maxchar: 200,
-                time: 60,
-            },
-            players: new Set<Player>()
-        }*/
-
         // create new roomData
         const _gameSetting : GameSetting = {
             gamemode: "Classic",
@@ -69,7 +57,8 @@ app.post('/rooms/create', (req, res) => {
         }
         const _players = new Set<Player>();
         const _sockets = new Set<WebSocket>();
-        let roomData = new RoomData(roomId, _gameSetting, _players, _sockets);
+        const _readyPlayer = new Map<string, boolean>();
+        let roomData = new RoomData(roomId, _gameSetting, _players, _sockets, _readyPlayer);
 
         roomDataMap.set(roomId, roomData);
     }
@@ -151,6 +140,23 @@ wss.on('connection', (ws, req) => {
                     if(_ws != ws) _ws.send(JSON.stringify({
                         type:'gameSetting',
                         gameSetting:_roomData.gameSetting
+                    }))
+                });
+            }
+        }
+
+        else if(message['type'] == 'readyPlayers'){
+            let _roomData = roomDataMap.get(message['roomId']);
+            
+            if(_roomData){
+                _roomData.addReadyPlayer(message['playerId']);
+                roomDataMap.set(message['roomId'], _roomData);
+
+                console.log(`ready player: ${JSON.stringify(_roomData.readyPlayers)}`);
+                _roomData.sockets.forEach((_ws) => {
+                    if(_ws != ws) _ws.send(JSON.stringify({
+                        type:'readyPlayers',
+                        readyPlayers:_roomData.readyPlayers
                     }))
                 });
             }
