@@ -152,11 +152,12 @@ wss.on('connection', (ws, req) => {
                 _roomData.addReadyPlayer(message['playerId']);
                 roomDataMap.set(message['roomId'], _roomData);
 
-                console.log(`ready player: ${JSON.stringify(_roomData.readyPlayers)}`);
+                //console.log(`ready player: ${JSON.stringify(_roomData.readyPlayers)}`);
+                console.log(`readyplayers outside: ${JSON.stringify(Array.from(_roomData.readyPlayers.entries()))}`);
                 _roomData.sockets.forEach((_ws) => {
-                    if(_ws != ws) _ws.send(JSON.stringify({
+                    _ws.send(JSON.stringify({
                         type:'readyPlayers',
-                        readyPlayers:_roomData.readyPlayers
+                        readyPlayers: JSON.stringify(Array.from(_roomData.readyPlayers.entries()))
                     }))
                 });
             }
