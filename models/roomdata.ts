@@ -19,7 +19,12 @@ export default class RoomData{
 
     addPlayers(player: Player) : void {
         this.gameSetting.initialInstance = false;
-        this.players.add(player);
+        let exist = false;
+        this.players.forEach((_player) => {
+            if(player.playerId == _player.playerId) exist = true;
+        })
+
+        if(!exist) this.players.add(player);
     }
 
     removePlayer(playerId: string) : boolean {
@@ -34,7 +39,7 @@ export default class RoomData{
     }
 
     addSocket(ws: WebSocket) : void {
-        this.sockets.add(ws);
+        if(!this.sockets.has(ws)) this.sockets.add(ws);
     }
 
     removeSocket(ws: WebSocket) : void {

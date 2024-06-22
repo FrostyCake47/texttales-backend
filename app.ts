@@ -133,6 +133,7 @@ wss.on('connection', (ws, req) => {
 
             if(_roomData){
                 _roomData.gameSetting = message['gameSetting'];
+                _roomData.gameSetting['initialInstance'] = false;
                 roomDataMap.set(message['roomId'], _roomData);
                 
                 console.log(`new gameSetting: ${JSON.stringify(_roomData.gameSetting)}`);
