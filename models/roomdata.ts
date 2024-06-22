@@ -42,7 +42,8 @@ export default class RoomData{
     }
 
     addReadyPlayer(playerId: string) : void{
-        this.readyPlayers.set(playerId, true);
+        this.readyPlayers.has(playerId) ? this.readyPlayers.set(playerId, !this.readyPlayers.get(playerId)) ?? true : this.readyPlayers.set(playerId, true);
+        //this.readyPlayers.set(playerId, true);
     }
 
     removeReadyPlayer(playerId: string) : void {
