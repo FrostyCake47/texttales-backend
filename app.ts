@@ -98,8 +98,9 @@ app.post('/game/create', (req, res) => {
         const currentPlayers = roomdata.players;
         const stories = Array<Story>();
         const roomId = roomdata.roomId;
+        const sockets = new Set<WebSocket>();
 
-        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers);
+        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets);
 
         /*roomDataMap.delete(roomId);
         console.log('roomdata deleted');
@@ -199,6 +200,7 @@ wss.on('connection', (ws, req) => {
             }
         }
 
+        //when leader sends this message, others will be forwared to their game
         else if(message['type'] == 'gamejoin'){
             let _roomData = roomDataMap.get(message['roomId']);
 
@@ -213,7 +215,30 @@ wss.on('connection', (ws, req) => {
             }
 
         }
-    })
+
+        //when the players join the game, add their info to gameData, and forward new set of players
+        else if(message['type'] == 'joingame'){
+            const player: Player = {
+                playerId : message['player']['playerId'],
+                name: message['player']['name'],
+                photoURL: message['player']['photoURL']
+            }
+
+            const gameData = gameDataMap.get(message['gameId']);
+            if(gameData){
+                gameData.currentPlayers.add(player);
+                gameData.sockets.add(ws);
+                playerGameMap.set(ws, {playerId:player.playerId, gameId:message['gameId']});
+
+                gameData.sockets.forEach((_ws) => {
+                    if(_ws != ws) _ws.send(JSON.stringify({
+                        type:'otherjoin',
+                        player:player
+                    }));
+                })
+            }
+        }
+    });
 
 
     ws.on('close', (data) => {
