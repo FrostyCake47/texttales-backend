@@ -95,7 +95,7 @@ app.post('/game/create', (req, res) => {
         const gameId = getGameId(gameDataMap) ?? '';
         console.log(`gameId: ${gameId}`);
         const gameSetting = roomdata.gameSetting;
-        const currentPlayers = roomdata.players;
+        const currentPlayers = new Set<Player>();
         const stories = Array<Story>();
         const roomId = roomdata.roomId;
         const sockets = new Set<WebSocket>();
@@ -231,9 +231,9 @@ wss.on('connection', (ws, req) => {
                 playerGameMap.set(ws, {playerId:player.playerId, gameId:message['gameId']});
 
                 gameData.sockets.forEach((_ws) => {
-                    if(_ws != ws) _ws.send(JSON.stringify({
-                        type:'otherjoin',
-                        player:player
+                    _ws.send(JSON.stringify({
+                        type:'newplayers',
+                        players: Array.from(gameData.currentPlayers)
                     }));
                 })
             }
