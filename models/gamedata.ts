@@ -2,7 +2,7 @@ import GameSetting from "./gamesetting";
 import Player from "./player";
 
 
-export default class gameData{
+export default class GameData{
     gameId: string;
     gameSetting: GameSetting;
     stories: Array<Story>
@@ -15,6 +15,8 @@ export default class gameData{
         this.currentPlayers =  currentPlayers;
     }
 
+    
+
 }
 
 
@@ -25,7 +27,7 @@ interface Page{
     playerId: string;
 }
 
-interface Story{
+export interface Story{
     gameId: string;
     storyId: number;
     title: string;

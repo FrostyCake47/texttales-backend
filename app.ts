@@ -8,6 +8,8 @@ import Player from "./models/player";
 import RoomData from "./models/roomdata";
 import GameSetting from "./models/gamesetting";
 import logRoomData from "./models/logroomdata";
+import GameData, { Story } from "./models/gamedata";
+import getGameId from "./services/getgameid";
 
 const app = express();
 app.use(express.json());
@@ -15,17 +17,19 @@ app.use(express.json());
 const port = 6969;
 const port2 = 1234;
 
-let onlineRooms = new Set<number>();
 let roomDataMap = new Map<number, RoomData>();
+let gameDataMap = new Map<string, GameData>();
 
-let playerMap = new  Map<WebSocket, {playerId: string, roomId: number}>();
-//let playerMap2 = new Map<string, WebSocket>();
+let playerLobbyMap = new  Map<WebSocket, {playerId: string, roomId: number}>();
+let playerGameMap = new Map<WebSocket, {playerId: string, gameId: string}>();
+
 
 const wss = new WebSocketServer({ port });
 
 
 app.get('/weow', (req, res) => {
-    const roomId = getRoomID(onlineRooms);
+    const onlineRooms = new Set(roomDataMap.keys());
+    const roomId = getRoomID(onlineRooms) ?? 0;
     console.log(roomId);
     try{
         res.json({roomId});
@@ -36,7 +40,8 @@ app.get('/weow', (req, res) => {
 })
 
 app.post('/rooms/create', (req, res) => {
-    const roomId = getRoomID(onlineRooms) ?? 0; 
+    const onlineRooms = new Set(roomDataMap.keys());
+    const roomId = getRoomID(onlineRooms) ?? 0;
     console.log(roomId);
     //console.log(req.body);
 
@@ -65,10 +70,8 @@ app.post('/rooms/create', (req, res) => {
 
     //logRoomData(roomDataMap);
     console.log(JSON.stringify(roomDataMap, null, 2));
-
     try{
         res.json({roomId});
-
     }
     catch(e){
         console.log(e);
@@ -79,6 +82,38 @@ app.post('/rooms/join', (req, res) => {
     const inputRoomId = req.body['roomId'];
     if(roomDataMap.has(inputRoomId)) res.json({'status':true});
     else res.json({'status':false});
+})
+
+
+app.post('/game/create', (req, res) => {
+    console.log(`/game/create`);
+    const message = req.body;
+    console.log(message);
+    const roomdata = roomDataMap.get(message['roomId']);
+    
+    if(roomdata){
+        const gameId = getGameId(gameDataMap) ?? '';
+        console.log(`gameId: ${gameId}`);
+        const gameSetting = roomdata.gameSetting;
+        const currentPlayers = roomdata.players;
+        const stories = Array<Story>();
+        const roomId = roomdata.roomId;
+
+        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers);
+
+        /*roomDataMap.delete(roomId);
+        console.log('roomdata deleted');
+        
+        roomdata.sockets.forEach((ws) => {
+            playerLobbyMap.delete(ws);
+        });*/
+
+
+        gameDataMap.set(gameId, gameData);
+        res.json({'status': true, gameData: gameData, 'type':'gameData'});
+    }
+
+    else res.json({'status':false, error:"Room doesnt exist"});
 })
 
 
@@ -107,7 +142,7 @@ wss.on('connection', (ws, req) => {
                 _roomData.addSocket(ws);
 
                 roomDataMap.set(message['roomId'], _roomData);
-                playerMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
+                playerLobbyMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
                 logRoomData(roomDataMap);
 
                 //give gamesetting to newly joined player
@@ -163,12 +198,27 @@ wss.on('connection', (ws, req) => {
                 });
             }
         }
+
+        else if(message['type'] == 'gamejoin'){
+            let _roomData = roomDataMap.get(message['roomId']);
+
+            if(_roomData){
+                console.log(_roomData.players);
+                _roomData.sockets.forEach((_ws) => {
+                    if(_ws != ws) _ws.send(JSON.stringify({
+                        type:'gamejoin',
+                        gameData:message['gameData']
+                    }))
+                });
+            }
+
+        }
     })
 
 
     ws.on('close', (data) => {
         console.log(`User disconnected data: ${data}`);
-        const playerInfo: {playerId: string, roomId: number} | undefined = playerMap.get(ws);
+        const playerInfo: {playerId: string, roomId: number} | undefined = playerLobbyMap.get(ws);
 
         if(playerInfo){
             console.log(`disconnected user: ${playerInfo.playerId} from room ${playerInfo.roomId}`);
@@ -199,10 +249,8 @@ wss.on('connection', (ws, req) => {
 
             console.log(`loggin roomDataMap`);
             logRoomData(roomDataMap);
-            
-
             //remove player from playerMap
-            playerMap.delete(ws);
+            playerLobbyMap.delete(ws);
         }
 
     })
