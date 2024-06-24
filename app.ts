@@ -100,7 +100,7 @@ app.post('/game/create', (req, res) => {
         const roomId = roomdata.roomId;
         const sockets = new Set<WebSocket>();
 
-        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets);
+        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets, 1);
 
         /*roomDataMap.delete(roomId);
         console.log('roomdata deleted');
@@ -218,6 +218,7 @@ wss.on('connection', (ws, req) => {
 
         //when the players join the game, add their info to gameData, and forward new set of players
         else if(message['type'] == 'joingame'){
+            console.log(`joingame ${message['player']['name']}`);
             const player: Player = {
                 playerId : message['player']['playerId'],
                 name: message['player']['name'],
@@ -231,8 +232,14 @@ wss.on('connection', (ws, req) => {
                 playerGameMap.set(ws, {playerId:player.playerId, gameId:message['gameId']});
 
                 gameData.sockets.forEach((_ws) => {
-                    _ws.send(JSON.stringify({
-                        type:'newplayers',
+                    if(_ws != ws)_ws.send(JSON.stringify({
+                        type:'otherjoingame',
+                        players: Array.from(gameData.currentPlayers)
+                    }));
+
+                    else ws.send(JSON.stringify({
+                        type:'youjoingame',
+                        gameData: gameData,
                         players: Array.from(gameData.currentPlayers)
                     }));
                 })

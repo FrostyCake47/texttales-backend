@@ -8,13 +8,15 @@ export default class GameData{
     stories: Array<Story>;
     currentPlayers: Set<Player>;
     sockets: Set<WebSocket>;
+    currentRound: number;
 
-    constructor(gameId: string, gameSetting: GameSetting, stories: Array<Story>, currentPlayers: Set<Player>, sockets: Set<WebSocket>){
+    constructor(gameId: string, gameSetting: GameSetting, stories: Array<Story>, currentPlayers: Set<Player>, sockets: Set<WebSocket>, currentRound: number){
         this.gameId = gameId;
         this.gameSetting = gameSetting;
         this.stories = stories;
         this.currentPlayers =  currentPlayers;
         this.sockets = sockets;
+        this.currentRound = currentRound;
     }
 
     
