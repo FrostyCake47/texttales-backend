@@ -56,7 +56,7 @@ export default class GameData{
 }
 
 
-interface Page{
+export interface Page{
     storyId: number;
     pageId: number;
     content: string;

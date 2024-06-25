@@ -8,7 +8,7 @@ import Player from "./models/player";
 import RoomData from "./models/roomdata";
 import GameSetting from "./models/gamesetting";
 import logRoomData from "./models/logroomdata";
-import GameData, { Story } from "./models/gamedata";
+import GameData, { Page, Story } from "./models/gamedata";
 import getGameId from "./services/getgameid";
 
 const app = express();
@@ -252,7 +252,13 @@ wss.on('connection', (ws, req) => {
 
             if(gameData){
                 gameData.submitCount++;
-                gameData.insertStory(story);
+                if(story.title == '') {
+                    gameData.stories.forEach((_story) => {
+                        if(_story.gameId == story.gameId) _story.pages.push(story.pages[0]);
+                    })
+                } 
+                else gameData.insertStory(story);
+                console.log(`currentPlayers in titlepage: ${Array.from(gameData.currentPlayers)}`);
 
                 if((gameData.submitCount % gameData.currentPlayers.size) == 0){
                     gameData.currentRound++;
