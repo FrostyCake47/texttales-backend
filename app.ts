@@ -100,7 +100,7 @@ app.post('/game/create', (req, res) => {
         const roomId = roomdata.roomId;
         const sockets = new Set<WebSocket>();
 
-        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets, 1);
+        const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets, 1, true, 0);
 
         /*roomDataMap.delete(roomId);
         console.log('roomdata deleted');
@@ -244,6 +244,27 @@ wss.on('connection', (ws, req) => {
                     }));
                 })
             }
+        }
+
+        else if(message['type'] == 'titlepage'){
+            const story: Story = message['story'] as Story;
+            let gameData = gameDataMap.get(story.gameId);
+
+            if(gameData){
+                gameData.submitCount++;
+                gameData.insertStory(story);
+                gameDataMap.set(gameData.gameId, gameData);
+
+                if((gameData.submitCount % gameData.currentPlayers.size) == 0){
+                    gameData.sockets.forEach((_ws) => {
+                        _ws.send(JSON.stringify({
+                            type: 'newround',
+                            stories: gameData.stories
+                        }));
+                    });
+                }
+            }
+
         }
     });
 
