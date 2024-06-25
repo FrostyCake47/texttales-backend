@@ -255,12 +255,13 @@ wss.on('connection', (ws, req) => {
                 gameData.insertStory(story);
 
                 if((gameData.submitCount % gameData.currentPlayers.size) == 0){
+                    gameData.currentRound++;
                     gameData.submitCount = 0;
                     gameData.sockets.forEach((_ws) => {
                         _ws.send(JSON.stringify({
                             type: 'newround',
                             stories: gameData.stories,
-                            submitCount: gameData.submitCount
+                            submitCount: gameData.submitCount,
                         }));
                     });
                 }
