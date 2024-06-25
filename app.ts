@@ -253,18 +253,28 @@ wss.on('connection', (ws, req) => {
             if(gameData){
                 gameData.submitCount++;
                 gameData.insertStory(story);
-                gameDataMap.set(gameData.gameId, gameData);
 
                 if((gameData.submitCount % gameData.currentPlayers.size) == 0){
+                    gameData.submitCount = 0;
                     gameData.sockets.forEach((_ws) => {
                         _ws.send(JSON.stringify({
                             type: 'newround',
-                            stories: gameData.stories
+                            stories: gameData.stories,
+                            submitCount: gameData.submitCount
                         }));
                     });
                 }
-            }
+                else{
+                    gameData.sockets.forEach((_ws) => {
+                        _ws.send(JSON.stringify({
+                            type: 'submitCount',
+                            submitCount: gameData.submitCount
+                        }));
+                    });
+                }
 
+                gameDataMap.set(gameData.gameId, gameData);
+            }
         }
     });
 
