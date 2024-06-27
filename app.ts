@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import express from 'express';
-import http from 'http';
-import cors from 'cors';
+/*import http from 'http';
+import cors from 'cors';*/
 
 import getRoomID from "./services/getroomid";
 import Player from "./models/player";
@@ -56,7 +56,7 @@ app.post('/rooms/create', (req, res) => {
         const _gameSetting : GameSetting = {
             gamemode: "Classic",
             initialInstance: true,
-            rounds: 7,
+            rounds: 3,
             maxchar: 200,
             time: 60,
         }
@@ -200,6 +200,18 @@ wss.on('connection', (ws, req) => {
             }
         }
 
+        else if(message['type'] == 'message'){
+            let roomData = roomDataMap.get(message['roomId']);
+
+            if(roomData){
+                roomData.sockets.forEach((ws) => {
+                    ws.send(JSON.stringify({
+                        'message':message['message']
+                    }));
+                })
+            }
+        }
+
         //when leader sends this message, others will be forwared to their game
         else if(message['type'] == 'gamejoin'){
             let _roomData = roomDataMap.get(message['roomId']);
@@ -254,7 +266,7 @@ wss.on('connection', (ws, req) => {
                 gameData.submitCount++;
                 if(story.title == '') {
                     gameData.stories.forEach((_story) => {
-                        if(_story.gameId == story.gameId) _story.pages.push(story.pages[0]);
+                        if(_story.storyId == story.storyId) _story.pages.push(story.pages[0]);
                     })
                 } 
                 else gameData.insertStory(story);
