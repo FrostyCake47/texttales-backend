@@ -51,6 +51,17 @@ export default class GameData{
         // Insert the new story by shifting elements to the right
         this.stories.splice(i, 0, story);
     }
+
+    removePlayer(playerId: string) : boolean {
+        for (const player of this.currentPlayers) {
+            if (player.playerId === playerId) {
+                this.currentPlayers.delete(player);
+                console.log(`this should return true`);
+                return true;
+            }
+        }
+        return false;
+    }
     
 
 }

@@ -7,7 +7,7 @@ import getRoomID from "./services/getroomid";
 import Player from "./models/player";
 import RoomData from "./models/roomdata";
 import GameSetting from "./models/gamesetting";
-import logRoomData from "./models/logroomdata";
+import logRoomData, { logGameData } from "./models/logroomdata";
 import GameData, { Page, Story } from "./models/gamedata";
 import getGameId from "./services/getgameid";
 
@@ -293,6 +293,7 @@ wss.on('connection', (ws, req) => {
                 }
 
                 gameDataMap.set(gameData.gameId, gameData);
+                logGameData(gameDataMap);
             }
         }
     });
@@ -301,6 +302,7 @@ wss.on('connection', (ws, req) => {
     ws.on('close', (data) => {
         console.log(`User disconnected data: ${data}`);
         const playerInfo: {playerId: string, roomId: number} | undefined = playerLobbyMap.get(ws);
+        const playerInfo2: {playerId: string, gameId: string} | undefined = playerGameMap.get(ws);
 
         if(playerInfo){
             console.log(`disconnected user: ${playerInfo.playerId} from room ${playerInfo.roomId}`);
@@ -335,6 +337,31 @@ wss.on('connection', (ws, req) => {
             playerLobbyMap.delete(ws);
         }
 
+        else if(playerInfo2){
+            let gameData = gameDataMap.get(playerInfo2.gameId);
+
+            if(gameData?.removePlayer(playerInfo2.playerId) == true){
+                gameData.sockets.delete(ws);
+                
+                gameDataMap.set(gameData.gameId, gameData);
+
+                gameData.sockets.forEach((_ws) => {
+                    if(_ws != ws)_ws.send(JSON.stringify({
+                        type:'otherjoingame',
+                        players: Array.from(gameData.currentPlayers)
+                    }));
+                })
+
+                if(gameData.currentPlayers.size == 0){
+                    gameDataMap.delete(playerInfo2.gameId);
+                }
+            }
+
+            console.log(`loggin gameDataMap`);
+            logGameData(gameDataMap);
+
+            playerGameMap.delete(ws);
+        }
     })
 
     
