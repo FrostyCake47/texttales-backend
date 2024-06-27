@@ -19,9 +19,11 @@ const port2 = 1234;
 
 let roomDataMap = new Map<number, RoomData>();
 let gameDataMap = new Map<string, GameData>();
+let storyDataMap  = new Map<string, WebSocket[]>();
 
 let playerLobbyMap = new  Map<WebSocket, {playerId: string, roomId: number}>();
 let playerGameMap = new Map<WebSocket, {playerId: string, gameId: string}>();
+let playerStoryMap = new Map<WebSocket, {gameId: string}>();
 
 
 const wss = new WebSocketServer({ port });
@@ -212,7 +214,7 @@ wss.on('connection', (ws, req) => {
             }
         }
 
-        //when leader sends this message, others will be forwared to their game
+        //when leader sends this message, others will be forwared to their game=
         else if(message['type'] == 'gamejoin'){
             let _roomData = roomDataMap.get(message['roomId']);
 
@@ -296,6 +298,53 @@ wss.on('connection', (ws, req) => {
                 logGameData(gameDataMap);
             }
         }
+
+        else if(message['type'] == 'joinstory'){
+            let storywslist = storyDataMap.get(message['gameId']);
+
+            if(storywslist) storywslist.push(ws);
+            else storywslist = [ws];
+            
+            storyDataMap.set(message['gameId'], storywslist);
+            playerStoryMap.set(ws, {gameId: message['gameId']});
+        }
+
+        else if(message['type'] == 'selectstory'){
+            let storywslist = storyDataMap.get(message['gameId']);
+            console.log(`on selectstory ${storywslist?.length}`);
+
+            if(storywslist){
+                storywslist.forEach((_ws) => {
+                    if(ws != _ws) _ws.send(JSON.stringify({
+                        'type':'selectstory',
+                        'index':message['index']
+                    }))
+                })
+            }
+        }
+        else if(message['type'] == 'goback'){
+            let storywslist = storyDataMap.get(message['gameId']);
+
+            if(storywslist){
+                storywslist.forEach((_ws) => {
+                    if(ws != _ws) _ws.send(JSON.stringify({
+                        'type':'goback',
+                    }))
+                })
+            }
+        }
+
+        else if(message['type'] == 'nextbutton'){
+            let storywslist = storyDataMap.get(message['gameId']);
+
+            if(storywslist){
+                storywslist.forEach((_ws) => {
+                    if(ws != _ws) _ws.send(JSON.stringify({
+                        'type':'nextbutton',
+                    }))
+                })
+            }
+        }
     });
 
 
@@ -303,6 +352,7 @@ wss.on('connection', (ws, req) => {
         console.log(`User disconnected data: ${data}`);
         const playerInfo: {playerId: string, roomId: number} | undefined = playerLobbyMap.get(ws);
         const playerInfo2: {playerId: string, gameId: string} | undefined = playerGameMap.get(ws);
+        const playerInfo3: {gameId: string} | undefined = playerStoryMap.get(ws);
 
         if(playerInfo){
             console.log(`disconnected user: ${playerInfo.playerId} from room ${playerInfo.roomId}`);
@@ -361,6 +411,17 @@ wss.on('connection', (ws, req) => {
             logGameData(gameDataMap);
 
             playerGameMap.delete(ws);
+        }
+
+        if(playerInfo3){
+            let storywslist = storyDataMap.get(playerInfo3.gameId);
+
+            if(storywslist){
+                storywslist.filter(_ws => _ws != ws);
+                storyDataMap.set(playerInfo3.gameId, storywslist);
+
+                playerStoryMap.delete(ws);
+            }
         }
     })
 
