@@ -1,3 +1,4 @@
+![screenshot](/assets/TextTales.png)
 # TextTales Backend
 
 This is the backend server for the TextTales project. It handles real-time communication, game state management, and user authentication for the interactive storytelling app.
