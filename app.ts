@@ -11,7 +11,8 @@ import GameSetting from "./models/gamesetting";
 import logRoomData, { logGameData } from "./models/logroomdata";
 import GameData, { Page, Story } from "./models/gamedata";
 import getGameId from "./services/getgameid";
-import History from './dbmodels/history'
+import History from './dbmodels/historymodel'
+import GameDataModel from "./dbmodels/gamedatamodel";
 
 const app = express();
 app.use(express.json());
@@ -122,8 +123,30 @@ app.post('/user/history/get', (req, res) => {
   res.json({'status':true})  
 })
 
-app.post('/game/upload', (req, res) => {
+app.post('/game/upload', async (req, res) => {
     const message = req.body
+    const gameData = gameDataMap.get(message['gameId']);
+    console.log(`/game/upload/ \n gameData: ${JSON.stringify(gameData, null, 2)}`);
+
+    try {
+        if(gameData){
+            const result = await GameDataModel.create({
+                gameId: gameData.gameId,
+                gameSetting: gameData.gameSetting,
+                players: Array.from(gameData.currentPlayers),
+                stories: gameData.stories
+            });
+            res.json({result});
+        }
+
+        res.json({'result':'gameData doesnt exist'});
+        
+    } catch (err) {
+        console.error('Error updating player games:', err);
+        res.json({err});
+    }
+
+    res.send('ok');
 })
 
 app.post('/user/history/add', async (req, res) => {
@@ -137,25 +160,11 @@ app.post('/user/history/add', async (req, res) => {
             { $push: { games: message['gameId'] } },
             { upsert: true, new: true } // upsert will create a new document if it doesn't exist
         );
-
-        if (result.upsertedId) {
-            console.log('New document created:', result.upsertedId);
-        } else if (result.modifiedCount > 0) {
-            console.log('Document updated:', result);
-        } else {
-            console.log('No changes made to the document:', result);
-        }
+        res.json({result});
     } catch (err) {
         console.error('Error updating player games:', err);
+        res.json({err});
     }
-    /*const history = new History({
-        playerId: playerId,
-        games: [message['gameId']]
-    }).save()
-    .then((result:any) => {
-        res.send(result);
-    })
-    .catch((err:any) => res.send(err));*/
 })
 
 
@@ -185,7 +194,6 @@ wss.on('connection', (ws, req) => {
 
                 roomDataMap.set(message['roomId'], _roomData);
                 playerLobbyMap.set(ws, {playerId:_player.playerId, roomId:_roomData.roomId});
-                logRoomData(roomDataMap);
 
                 //give gamesetting to newly joined player
                 ws.send(JSON.stringify({
@@ -334,7 +342,6 @@ wss.on('connection', (ws, req) => {
                 }
 
                 gameDataMap.set(gameData.gameId, gameData);
-                logGameData(gameDataMap);
             }
         }
 
