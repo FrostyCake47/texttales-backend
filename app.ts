@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
 import express from 'express';
+import mongoose from "mongoose";
 /*import http from 'http';
 import cors from 'cors';*/
 
@@ -10,9 +11,15 @@ import GameSetting from "./models/gamesetting";
 import logRoomData, { logGameData } from "./models/logroomdata";
 import GameData, { Page, Story } from "./models/gamedata";
 import getGameId from "./services/getgameid";
+import History from './dbmodels/history'
 
 const app = express();
 app.use(express.json());
+
+const dbURL = 'mongodb+srv://awesomeakash47:TLHgcp8vXj2CdgjF@texttales.vk3sqcw.mongodb.net/texttales?retryWrites=true&w=majority&appName=texttales'
+mongoose.connect(dbURL)
+    .then((res) => console.log(`connected to texttales db`))
+    .catch((err) => console.log(`error connecting to db: ${err}`));
 
 const port = 6969;
 const port2 = 1234;
@@ -104,19 +111,51 @@ app.post('/game/create', (req, res) => {
 
         const gameData = new GameData(gameId, gameSetting, stories, currentPlayers, sockets, 1, true, 0);
 
-        /*roomDataMap.delete(roomId);
-        console.log('roomdata deleted');
-        
-        roomdata.sockets.forEach((ws) => {
-            playerLobbyMap.delete(ws);
-        });*/
-
-
         gameDataMap.set(gameId, gameData);
         res.json({'status': true, gameData: gameData, 'type':'gameData'});
     }
 
     else res.json({'status':false, error:"Room doesnt exist"});
+})
+
+app.post('/user/history/get', (req, res) => {
+  res.json({'status':true})  
+})
+
+app.post('/game/upload', (req, res) => {
+    const message = req.body
+})
+
+app.post('/user/history/add', async (req, res) => {
+    const message = req.body;
+    console.log(`/user/history/add \n message: ${message}`);
+    const playerId = message['playerId'];
+
+    try {
+        const result = await History.updateOne(
+            { playerId: playerId },
+            { $push: { games: message['gameId'] } },
+            { upsert: true, new: true } // upsert will create a new document if it doesn't exist
+        );
+
+        if (result.upsertedId) {
+            console.log('New document created:', result.upsertedId);
+        } else if (result.modifiedCount > 0) {
+            console.log('Document updated:', result);
+        } else {
+            console.log('No changes made to the document:', result);
+        }
+    } catch (err) {
+        console.error('Error updating player games:', err);
+    }
+    /*const history = new History({
+        playerId: playerId,
+        games: [message['gameId']]
+    }).save()
+    .then((result:any) => {
+        res.send(result);
+    })
+    .catch((err:any) => res.send(err));*/
 })
 
 
