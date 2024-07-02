@@ -119,7 +119,7 @@ app.post('/game/create', (req, res) => {
     else res.json({'status':false, error:"Room doesnt exist"});
 })
 
-app.post('/user/history/get', async  (req, res) => {
+app.post('/game/gamedata', async  (req, res) => {
     const message = req.body;
     const gameId = message['gameId'];
 
@@ -131,6 +131,9 @@ app.post('/user/history/get', async  (req, res) => {
         res.json({err});
     }
 })
+
+
+
 
 app.post('/game/upload', async (req, res) => {
     const message = req.body
@@ -175,6 +178,20 @@ app.post('/user/history/add', async (req, res) => {
         res.json({err});
     }
 })
+
+app.post('/user/history/get', async  (req, res) => {
+    const message = req.body;
+    const playerId = message['playerId'];
+
+    try{
+        const result = await History.findOne({playerId: playerId});
+        res.json({result});
+    } catch (err: any){
+        console.log(`error: ${err}`);
+        res.json({err});
+    }
+})
+
 
 
 wss.on('connection', (ws, req) => {
