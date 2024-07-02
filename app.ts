@@ -119,8 +119,17 @@ app.post('/game/create', (req, res) => {
     else res.json({'status':false, error:"Room doesnt exist"});
 })
 
-app.post('/user/history/get', (req, res) => {
-  res.json({'status':true})  
+app.post('/user/history/get', async  (req, res) => {
+    const message = req.body;
+    const gameId = message['gameId'];
+
+    try{
+        const result = await GameDataModel.findOne({gameId:gameId})
+        res.json({result});
+    } catch (err: any){
+        console.log(`error: ${err}`);
+        res.json({err});
+    }
 })
 
 app.post('/game/upload', async (req, res) => {
