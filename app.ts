@@ -125,7 +125,7 @@ app.post('/game/gamedata', async  (req, res) => {
 
     try{
         const result = await GameDataModel.findOne({gameId:gameId})
-        res.json({result});
+        res.json({'gameData':result});
     } catch (err: any){
         console.log(`error: ${err}`);
         res.json({err});
@@ -183,15 +183,35 @@ app.post('/user/history/get', async  (req, res) => {
 
     try{
         const userHistory = await History.findOne({playerId: playerId});
+        const titleMap = new Map<string, string[]>();
         let result = null;
         if(userHistory){
-            console.log(userHistory['games']);
-            result = await GameDataModel.find({gameId : { $in : userHistory['games'] }});
-            console.log(JSON.stringify(result, null, 2));
-        }
-        
+            result = await GameDataModel.find({gameId : { $in : userHistory['games'],}}, {stories: 1, gameId:1});
+            result.forEach((item) => {
+                //console.log(JSON.stringify(item, null, 2));
+                if(titleMap.has(item['gameId'])){
+                    let titles = titleMap.get(item['gameId']);
+                    if(titles){
+                        item['stories'].forEach((story) => {
+                            titles?.push(story.title ?? '');
+                        });
+                        titleMap.set(item['gameId'], titles);
+                    }
+                }
+                else{
+                    let titles: string [] = [];
+                    item['stories'].forEach((story) => {
+                        titles.push(story.title ?? '');
+                    });
+                    console.log(titles);
+                    titleMap.set(item['gameId'], titles);
+                }
+            });
 
-        res.json({result});
+
+        }
+        const titleMapObject = Object.fromEntries(titleMap.entries());
+        res.json({titleMapObject});
     } catch (err: any){
         console.log(`error: ${err}`);
         res.json({err});
