@@ -151,14 +151,12 @@ app.post('/game/upload', async (req, res) => {
             res.json({result});
         }
 
-        res.json({'result':'gameData doesnt exist'});
+        else res.json({'result':'gameData doesnt exist'});
         
     } catch (err) {
-        console.error('Error updating player games:', err);
+        console.error('Error uploading gameData:', err);
         res.json({err});
     }
-
-    res.send('ok');
 })
 
 app.post('/user/history/add', async (req, res) => {
@@ -174,7 +172,7 @@ app.post('/user/history/add', async (req, res) => {
         );
         res.json({result});
     } catch (err) {
-        console.error('Error updating player games:', err);
+        console.error('Error adding user history:', err);
         res.json({err});
     }
 })
@@ -184,7 +182,15 @@ app.post('/user/history/get', async  (req, res) => {
     const playerId = message['playerId'];
 
     try{
-        const result = await History.findOne({playerId: playerId});
+        const userHistory = await History.findOne({playerId: playerId});
+        let result = null;
+        if(userHistory){
+            console.log(userHistory['games']);
+            result = await GameDataModel.find({gameId : { $in : userHistory['games'] }});
+            console.log(JSON.stringify(result, null, 2));
+        }
+        
+
         res.json({result});
     } catch (err: any){
         console.log(`error: ${err}`);
