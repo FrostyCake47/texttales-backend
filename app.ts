@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import express from 'express';
 import mongoose from "mongoose";
+import * as dotenv from 'dotenv'
 /*import http from 'http';
 import cors from 'cors';*/
 
@@ -14,10 +15,12 @@ import getGameId from "./services/getgameid";
 import History from './dbmodels/historymodel'
 import GameDataModel from "./dbmodels/gamedatamodel";
 
+dotenv.config();
+
 const app = express();
 app.use(express.json());
 
-const dbURL = 'mongodb+srv://awesomeakash47:TLHgcp8vXj2CdgjF@texttales.vk3sqcw.mongodb.net/texttales?retryWrites=true&w=majority&appName=texttales'
+const dbURL = `mongodb+srv://awesomeakash47:TLHgcp8vXj2CdgjF@texttales.vk3sqcw.mongodb.net/texttales?retryWrites=true&w=majority&appName=texttales`
 mongoose.connect(dbURL)
     .then((res) => console.log(`connected to texttales db`))
     .catch((err) => console.log(`error connecting to db: ${err}`));
